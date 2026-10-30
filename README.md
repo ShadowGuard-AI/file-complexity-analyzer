@@ -1,3 +1,5 @@
+![Banner](banner.png)
+
 # file-complexity-analyzer
 Analyzes the internal structure of binary files (e.g., executables, libraries) to identify unusually complex or obfuscated code sections, which may indicate malicious intent. Provides metrics on code density, control flow complexity, and data dependency complexity. - Focused on File operations and analysis
 
