@@ -39,24 +39,8 @@ def calculate_code_density(file_path):
         logging.error(f"Error calculating code density: {e}")
         return None
 
-def analyze_control_flow_complexity(file_path):
-      """
-      Placeholder for control flow complexity analysis.
-      This would ideally involve disassembling the binary and analyzing the control flow graph.
-      Requires more sophisticated tools and libraries (e.g., Capstone, radare2).
-      """
-      logging.warning("Control flow complexity analysis is a placeholder. Requires advanced binary analysis techniques.")
-      return "Control flow analysis not implemented."
 
 
-def analyze_data_dependency_complexity(file_path):
-    """
-    Placeholder for data dependency complexity analysis.
-    This would involve tracking data flow between instructions.
-    Requires more sophisticated tools and libraries.
-    """
-    logging.warning("Data dependency complexity analysis is a placeholder. Requires advanced binary analysis techniques.")
-    return "Data dependency analysis not implemented."
 
 
 def analyze_file(file_path):
@@ -74,14 +58,9 @@ def analyze_file(file_path):
         if code_density is None:
             return None
 
-        control_flow_complexity = analyze_control_flow_complexity(file_path)
-        data_dependency_complexity = analyze_data_dependency_complexity(file_path)
-
         results = {
             "file_path": file_path,
-            "code_density": code_density,
-            "control_flow_complexity": control_flow_complexity,
-            "data_dependency_complexity": data_dependency_complexity
+            "code_density": code_density
         }
 
         return results
@@ -104,8 +83,10 @@ def write_results_to_file(results, output_path):
             for key, value in results.items():
                 f.write(f"{key}: {value}\n")
         logging.info(f"Analysis results written to: {output_path}")
+        return True
     except Exception as e:
         logging.error(f"Error writing results to file: {e}")
+        return False
 
 def main():
     """
@@ -129,6 +110,16 @@ def main():
         logging.error(f"Not a file: {file_path}")
         sys.exit(1)
 
+    if output_path and pathlib.Path(output_path).resolve() == pathlib.Path(file_path).resolve():
+        logging.error("Output path resolves to the input file; refusing.")
+        print("Error: output path is the input file; refusing to overwrite it.")
+        sys.exit(1)
+
+    if os.path.getsize(file_path) == 0:
+        logging.error(f"Empty file, nothing to analyze: {file_path}")
+        print("Error: file is empty; nothing was analyzed.")
+        sys.exit(1)
+
     logging.info(f"Analyzing file: {file_path}")
     analysis_results = analyze_file(file_path)
 
@@ -137,7 +128,10 @@ def main():
             print(f"{key}: {value}") # Print results to console
 
         if output_path:
-            write_results_to_file(analysis_results, output_path)
+            if not write_results_to_file(analysis_results, output_path):
+                logging.error("File analysis failed: the report could not be written.")
+                print("Error: the report could not be written.")
+                sys.exit(1)
     else:
         logging.error("File analysis failed.")
         sys.exit(1)
