@@ -27,7 +27,15 @@ def calculate_code_density(file_path):
         with open(file_path, 'rb') as f:
             content = f.read()
         total_bytes = len(content)
+        # This is the whole metric, and I keep its crudeness in view: the share
+        # of non-zero bytes, as a percentage. Real code sections are dense with
+        # zero bytes in operands and padding, and data sections are often all
+        # non-zero, so the number is a rough texture reading of the file, not a
+        # measurement of how much of it is code.
         non_zero_bytes = sum(1 for byte in content if byte != 0) # Estimate code vs data based on non-zero bytes
+        # Unreachable through main, which refuses an empty file before calling
+        # in. Kept so a direct caller of this function gets 0.0 instead of a
+        # division error.
         if total_bytes == 0:
             return 0.0  # Avoid division by zero
         code_density = (non_zero_bytes / total_bytes) * 100
@@ -54,6 +62,9 @@ def analyze_file(file_path):
         if not os.path.isfile(file_path):
             raise ValueError(f"Not a file: {file_path}")
 
+        # analyze_file re-checks existence and file-ness that main already
+        # checked. The duplication is deliberate: this function is the public
+        # entry for direct callers, and it should fail the same way.
         code_density = calculate_code_density(file_path)
         if code_density is None:
             return None
@@ -115,6 +126,8 @@ def main():
         print("Error: output path is the input file; refusing to overwrite it.")
         sys.exit(1)
 
+    # An empty file is refused here rather than reported as zero density.
+    # Nothing was analyzed, and the run should not read as if it had been.
     if os.path.getsize(file_path) == 0:
         logging.error(f"Empty file, nothing to analyze: {file_path}")
         print("Error: file is empty; nothing was analyzed.")
